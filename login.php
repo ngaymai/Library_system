@@ -1,5 +1,5 @@
 <?php
-require 'C:\xampp\htdocs\firstPHP\config.php';
+require 'config.php';
 
 if(isset($_POST["submit"]))
 {
@@ -14,7 +14,7 @@ if(isset($_POST["submit"]))
       if($password == $row["PASSWORD"]){
         $_SESSION["login"]=true;
         $_SESSION["id"] = $row["SSN"];
-        header("Location: DB-LibrarySystem/src/createBill.php");
+        header("Location: src/createBill.php");
       }
       else{
         echo
@@ -55,7 +55,7 @@ if(isset($_POST["submit"]))
       </div>
        
     <div class="text-center" >        
-        <p>Don't have an accounts? <a href="http://localhost/firstPHP/regist.php"> Sign up</a></p>   
+        <p>Don't have an accounts? <a href="./regist.php"> Sign up</a></p>   
     </div>    
   </form>
 </div>
