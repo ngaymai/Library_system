@@ -92,7 +92,7 @@ if(isset($_POST["submit"])){
       <div class="center">
         <ul>
           <p class="title">MAIN</p>
-          <a href="/">
+          <a href="./dashboard.php">
             <li>
               <span>Dashboard</span>
             </li>

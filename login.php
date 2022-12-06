@@ -6,15 +6,18 @@ if(isset($_POST["submit"]))
   $password = $_POST['pswd'];
   $username = $_POST['username'];
   
+  
   $query = "select * from account 
       where username = '$username'";
   $res = mysqli_query($conn, $query);
   $row = mysqli_fetch_assoc($res);
   if(mysqli_num_rows($res)>0){
-      if($password == $row["PASSWORD"]){
-        $_SESSION["login"]=true;
-        $_SESSION["id"] = $row["SSN"];
-        header("Location: src/createBill.php");
+      if($password == $row["PASSWORD"]){        
+       // $_SESSION["login"]=true;
+       // $_SESSION["id"] = $row["SSN"];
+      setcookie("login", "true", time() + 24 * 60 * 60, "/");
+      setcookie("id", $row["SSN"], time()+ 24*60*60, "/");
+        header("Location: src/dashboard.php");
       }
       else{
         echo

@@ -1,3 +1,36 @@
+<?php
+require 'C:\xampp\htdocs\firstPHP\config.php';
+$query = "select  BID from bill";
+$res = mysqli_query($conn, $query);
+$data = array();
+
+while ($row = mysqli_fetch_assoc($res)) {
+  $data[] = $row;
+}
+
+
+
+if(isset($_POST['details'])){
+  $t = $_POST['details'][0];
+
+ $_SESSION["bid"] = $data[$t]['BID'];  
+  header("Location: ./billInfo.php");
+
+}
+
+// $query1 = "SELECT language FROM language WHERE ISBN = '001'";
+// $res1 = mysqli_query($conn, $query1);
+// $ar1=[];
+// while($row1 = mysqli_fetch_assoc($res1)){
+//   $tmp =  implode(',',$row1); 
+//   $ar1[] = $tmp;                
+// } 
+// var_dump($ar1);
+// echo implode(',',$ar1);   
+
+    
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -37,7 +70,7 @@
       <div class="center">
         <ul>
           <p class="title">MAIN</p>
-          <a href="/">
+          <a href="./dashboard.php">
             <li>
               <span>Dashboard</span>
             </li>
@@ -94,48 +127,109 @@
           <a class="nav-link" href="./createBill.php">Create new bill</a>
         </li>
       </ul>
-      <div class="search-bar">
-        <div class="input-group">
+      <form method = "POST" class="search-bar mt-lg-5">
+        <div method = "POST" class="input-group">
           <input class="form-control border-end-0 border rounded-pill" type="text" id="example-search-input"
-            placeholder="search...">
-          <span class="input-group-append">
-            <button class="btn btn-outline-secondary bg-white border-start-0 border rounded-pill ms-n3" type="button">
+            placeholder="search..." name="bid">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary bg-white border-start-0 border rounded-pill ms-n3" type="submit" name="sb">
               <i class="fa fa-search"></i>
             </button>
-          </span>
+          </div>
         </div>
-      </div>
+      </form>
 
-      <table class="table">
-        <thead class="thead-light">
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">First</th>
-            <th scope="col">Last</th>
-            <th scope="col">Handle</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">1</th>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
-          </tr>
-          <tr>
-            <th scope="row">2</th>
-            <td>Jacob</td>
-            <td>Thornton</td>
-            <td>@fat</td>
-          </tr>
-          <tr>
-            <th scope="row">3</th>
-            <td>Larry</td>
-            <td>the Bird</td>
-            <td>@twitter</td>
-          </tr>
-        </tbody>
-      </table>
+      <!--IF found, -->
+
+      <div class="mt-lg-5">
+        <table class="table mt-3">
+          <thead class="thead-light">
+            <tr>
+              <th scope="col">Bill ID</th>
+              <th scope="col">Status</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+          <?php
+if(isset($_POST['sb']) && isset($_POST['bid'])){
+            $b = $_POST['bid'];
+            $query = "select * from bill where bid = $b";
+                     
+            try {
+              $res = mysqli_query($conn, $query);
+              if(!$res)
+              throw new Exception("");
+              else{
+                
+                $row = mysqli_fetch_assoc($res);
+              
+                $query = "select  BID from valid_bill where BID = $b";
+                 $res = mysqli_query($conn, $query);
+                 $row1 = mysqli_fetch_assoc($res);
+                             $valid;
+                             if ($row1)
+                               $valid = 'Valid';
+                             else
+                               $valid = 'In valid';              
+                   echo '  <tr>
+                 <th scope="row">'.$row['BID'].'</th>
+                 <td>'.$valid.'</td>
+                 
+                 
+                 <td><form method = "Post">
+                 <button type="submit" class="btn btn-primary" name="details[]" value = "">View details</button>   
+                 </form></td>
+                 </tr>  '; 
+              }
+          } catch (Exception $e) {
+            $str = $e->getmessage();
+            echo
+            "<script>alert('.$str.')</script>"; 
+          } 
+         
+
+
+}
+else{
+  for ($i = 0; $i < count($data); $i++) {
+    $t = $data[$i]['BID'];
+   
+    $query = "select  BID from valid_bill where BID = $t";
+ $res = mysqli_query($conn, $query);
+ $row = mysqli_fetch_assoc($res);
+             $valid;
+             if ($row)
+               $valid = 'Valid';
+             else
+               $valid = 'In valid';              
+   echo '  <tr>
+ <th scope="row">'.$data[$i]['BID'].'</th>
+ <td>'.$valid.'</td>
+ 
+ 
+ <td><form method = "Post">
+ <button type="submit" class="btn btn-primary" name="details[]" value = "'.$i.'">View details</button>   
+ </form></td>
+ </tr>  ';  
+ 
+ }
+
+}
+
+ // <td>'. $data[$i]['edition'] . '</td>
+// <td>'. $data[$i]['PRICE'] . '</td>
+// <td>'. $data[$i]['available'] . '</td>
+// <td>'. $data[$i]['destroyed'] . '</td>
+// <td>'. $data[$i]['lost'].'</td>
+// <td>'. $data[$i]['hired'].'</td>
+// <td>'.$t1.'</td>
+// <td>'.$t2.'</td>
+// <td>'.$t3.'</td>
+?>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 

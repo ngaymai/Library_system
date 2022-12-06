@@ -96,8 +96,9 @@ if(isset($_POST["submit"])){
       <div class="center">
         <ul>
           <p class="title">MAIN</p>
-          <a href="/">
+          <a href="./dashboard.php">
             <li>
+              <i class="fas fa-th-large"></i>
               <span>Dashboard</span>
             </li>
           </a>
@@ -109,7 +110,7 @@ if(isset($_POST["submit"])){
             </li>
           </a> -->
           <a href="./manageBook.php">
-            <li>
+          <li class="active">
               <span>
                 <i class="fas fa-book"></i>
                 Manage book

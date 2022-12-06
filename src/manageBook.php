@@ -1,3 +1,33 @@
+<?php
+require 'C:\xampp\htdocs\firstPHP\config.php';
+$query = "select ISBN, title from book";
+$res = mysqli_query($conn, $query);
+$data = array();
+while ($row = mysqli_fetch_array($res, 1)) {
+  $data[] = $row;
+}
+
+
+
+if(isset($_POST['details'])){
+  $t = $_POST['details'][0];
+
+ $_SESSION["isbn"] = $data[$t]['ISBN'];  
+  header("Location: ./bookInfo.php");
+
+}
+// $query1 = "SELECT language FROM language WHERE ISBN = '001'";
+// $res1 = mysqli_query($conn, $query1);
+// $ar1=[];
+// while($row1 = mysqli_fetch_assoc($res1)){
+//   $tmp =  implode(',',$row1); 
+//   $ar1[] = $tmp;                
+// } 
+// var_dump($ar1);
+// echo implode(',',$ar1);   
+
+    
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -38,7 +68,7 @@
       <div class="center">
         <ul>
           <p class="title">MAIN</p>
-          <a href="/">
+          <a href="./dashboard.php">
             <li>
               <span>Dashboard</span>
             </li>
@@ -86,6 +116,8 @@
       <center>
         <h3 style="margin-bottom: 50px">Simple library management</h3>
       </center>
+      
+      
 
       <ul class="nav nav-tabs">
         <li class="nav-item">
@@ -111,30 +143,39 @@
         <thead class="thead-light">
           <tr>
             <th scope="col">#</th>
-            <th scope="col">First</th>
-            <th scope="col">Last</th>
-            <th scope="col">Handle</th>
+            <th scope="col">ISBN</th>
+            <th scope="col">Title</th>
+            <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">1</th>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
-          </tr>
-          <tr>
-            <th scope="row">2</th>
-            <td>Jacob</td>
-            <td>Thornton</td>
-            <td>@fat</td>
-          </tr>
-          <tr>
-            <th scope="row">3</th>
-            <td>Larry</td>
-            <td>the Bird</td>
-            <td>@twitter</td>
-          </tr>
+          <?php
+
+          for ($i = 0; $i < count($data); $i++) {
+            // $t1 = $data[$i]["ISBN"];
+            
+
+            echo '  <tr>
+    <th scope="row">' . ($i + 1) . '</th>
+    <td>'.$data[$i]['ISBN'].'</td>
+    <td>'. $data[$i]['title'] . '</td>
+    
+    <td><form method = "Post">
+    <button type="submit" class="btn btn-primary" name="details[]" value = "'.$i.'">View details</button>   
+      </form></td>
+  </tr>  ';  
+  
+          }
+           // <td>'. $data[$i]['edition'] . '</td>
+    // <td>'. $data[$i]['PRICE'] . '</td>
+    // <td>'. $data[$i]['available'] . '</td>
+    // <td>'. $data[$i]['destroyed'] . '</td>
+    // <td>'. $data[$i]['lost'].'</td>
+    // <td>'. $data[$i]['hired'].'</td>
+    // <td>'.$t1.'</td>
+    // <td>'.$t2.'</td>
+    // <td>'.$t3.'</td>
+          ?>
         </tbody>
       </table>
     </div>
@@ -142,3 +183,13 @@
 
 
 </body>
+
+</html>
+
+<?php
+// if(isset($_POST['details'])){
+//  // $_SESSION["isbn"] = $data[$i]['ISBN'];  
+//   header("Location: ./bookInfo.php");
+//   echo "asdg";
+// }
+?>
