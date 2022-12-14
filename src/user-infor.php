@@ -2,13 +2,14 @@
 require 'config.php';
 //require 'privileges.php';
 
-$ssn = $_SESSION["ssn"];
+$ssn = $_COOKIE["id"];
+//echo $ssn;
 $query = "call find_member_detail('$ssn')";
 $res = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($res);
-//print_r($row);
 mysqli_free_result($res);
 mysqli_next_result($conn);
+
 $query = "call find_bill_from_ssn('$ssn')";
 $res = mysqli_query($conn, $query);
 $data1 = array();
@@ -33,7 +34,7 @@ if ($data3) {
   }
 }
 
-if (isset($_POST['go'])) {
+if(isset($_POST['go'])){
   $_SESSION['bid'] = $_POST['go'];
   header("Location: ./billInfo.php");
 }
@@ -68,7 +69,7 @@ if (isset($_POST['go'])) {
   <div class="mngMember">
     <div class="sidebar">
       <div class="top">
-        <a href="./addBook.php" style="text-decoration: none;">
+        <a href="#" style="text-decoration: none;">
           <span class="logo">LMS</span>
         </a>
       </div>
@@ -76,7 +77,7 @@ if (isset($_POST['go'])) {
       <div class="center">
         <ul>
           <p class="title">MAIN</p>
-          <a href="./dashboard.php">
+          <a href="./user-dashboard.php">
             <li>
               <i class="fas fa-th-large"></i>
               <span>Dashboard</span>
@@ -89,19 +90,12 @@ if (isset($_POST['go'])) {
               <span>Insert book</span>
             </li>
           </a> -->
-          <a href="./manageBook.php">
+          <a href="./user-viewbook.php">
             <li>
               <span>
                 <i class="fas fa-book"></i>
-                Manage book
+                Book Library
               </span>
-            </li>
-          </a>
-          <a href="./manageMember.php">
-            <li class="active">
-              <span>
-                <i class="fas fa-users"></i>
-                Manage member</span>
             </li>
           </a>
           <!-- <a href="./createBill.php">
@@ -109,11 +103,19 @@ if (isset($_POST['go'])) {
               <span>Create bill</span>
             </li>
           </a> -->
-          <a href="./manageBill.php">
+          <a href="./user-bill.php">
             <li>
               <span>
                 <i class="fas fa-clipboard-list"></i>
-                Manage bill
+                Bill information
+              </span>
+            </li>
+          </a>
+          <a href="#">
+            <li class="active">
+              <span>
+                <i class="fas fa-clipboard-list"></i>
+                User information
               </span>
             </li>
           </a>
@@ -134,15 +136,8 @@ if (isset($_POST['go'])) {
       </center>
 
 
-      <!-- Back button -->
-      <button class="back-btn" onclick="history.back()">
-        <a href="./manageMember.php" style="color: black;">
-          <i class="fas fa-chevron-left"></i>
-          Back
-        </a>
-      </button>
 
-      <div class="card">
+      <div class="card m-5">
         <div class="card-body">
           <div class="wrapper">
             <h2>Member information</h2>
@@ -214,133 +209,20 @@ if (isset($_POST['go'])) {
                 </li>
               </ul>
             </div>
+
           </div>
 
         </div>
       </div>
 
-      <div class="card">
+
+
+      <!-- Punishment -->
+      <div class="card m-5">
         <div class="card-body">
-          <h3>Bill history</h3>
-          <div id="accordion">
-            <?php
-            if ($data1) {
-              for ($i = 0; $i < count($data1); $i++) {
-                $bid = $data1[$i]['BID'];
-
-                $query = "call bill_detail($bid);";
-
-                $res = mysqli_query($conn, $query);
-                $data2 = array();
-                while ($row2 = mysqli_fetch_assoc($res)) {
-                  $data2[] = $row2;
-                }
-                mysqli_free_result($res);
-                mysqli_next_result($conn);
-                $query = "select check_valid_bill($bid) as total";
-                $res1 = mysqli_query($conn, $query);
-                $tmp = mysqli_fetch_array($res1, 1);
-                mysqli_free_result($res1);
-                mysqli_next_result($conn);
-                $state = "";
-                if ($tmp['total'])
-                  $state = 'Valid';
-                else
-                  $state = 'Invalid';
-                $output = '<div class="card">
-                <div class="card-header" id="headingOne">
-                  <h6 class="mb-0">
-                  Bill ID:                 
-                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true"
-                      aria-controls="collapseOne">
-                      ' . $data1[$i]['BID'] . '
-                    </button>
-                  </h6>
-                </div>
-  
-                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                  <div class="card-body">
-                    <ol>
-                      <li>
-                        <span class="a-list-item">
-                          <span class="a-text-bold">Status : </span>
-                          <span>' . $state . '</span>
-                        </span>
-                      </li>
-                      <li>
-                        <span class="a-list-item">
-                          <span class="a-text-bold">Created at : </span>
-                          <span>' . $data1[$i]['start_date'] . '</span>
-                        </span>
-                      </li><li>
-                      <b>Book List</b>
-                    </li>
-                    <table class="table">
-                      <thead>
-                        <tr>
-                          <th scope="col">#</th>
-                          <th scope="col">Book ID</th>
-                          <th scope="col">Title</th>
-                          <th scope="col">Return date</th>                          
-                        </tr>
-                      </thead>
-                      <tbody>    
-                      ';
-
-                if ($data2) {
-
-                  for ($j = 0; $j < count($data2); $j++) {
-                    $isbn = $data2[$j]['ISBN'];
-                    $query3 = "call find_book('$isbn')";
-                    $res3 = mysqli_query($conn, $query3);
-                    $row3 = mysqli_fetch_assoc($res3);                    
-                    mysqli_free_result($res3);
-                    mysqli_next_result($conn);
-                    $date = "";
-                    // echo $data2[$j]['RETURN_DATE'];
-                    if (!$data2[$j]['RETURN_DATE'])
-                      $date = "NULL";
-                    else
-                      $date = $data2[$j]['RETURN_DATE'];
-                    //echo $date;
-                    $output .= '                  
-                          <tr>
-                            <th scope="row">' . ($j + 1) . '</th>
-                            <td>' . $data2[$j]['ISBN'] . ' </td>
-                            <td>' . $row3['title'] . '</td>
-                            <td>' . $date . ' </td>
-                            
-                          </tr>                        
-                        ';
-                  }
-
-                }
-                $output .= '</tbody>
-                </table>
-                <ul>
-  
-                </ul>
-              </ol>
-              <form method = "Post">
-              <button  class="btn btn-primary" value = "' . $data1[$i]['BID'] . '"  name="go" >Go to bill details</button>
-              </form>
-              
-            </div>
-          </div>
-        </div>';
-                echo $output;
-              }
-
-            }
-
-            ?>
-
-
-            <div class="card">
-              <div class="card-body">
-                <div class="wrapper">
-                  <h2>Punishment history</h2>
-                  <span class="a-list-item">
+          <div class="wrapper">
+            <h2>Punishment history</h2>
+            <span class="a-list-item">
                     <span class="a-text-bold">Total : </span>
                     <span>
                       <?php echo $sum . ' VND' ?>
@@ -386,17 +268,16 @@ if (isset($_POST['go'])) {
                       }
 
                       ?>
-
-                    </tbody>
-                  </table>
-
-                </div>
-
-              </div>
-            </div>
+              </tbody>
+            </table>
 
           </div>
+
         </div>
+      </div>
+
+    </div>
+  </div>
 </body>
 
 </html>

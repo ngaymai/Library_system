@@ -7,24 +7,23 @@ $data = array();
 while ($row = mysqli_fetch_array($res, 1)) {
   $data[] = $row;
 }
-
 mysqli_free_result($res);
 mysqli_next_result($conn);
 
-if(isset($_POST['details'])){
-  $t = $_POST['details'][0];
+// if(isset($_POST['details'])){
+//   $t = $_POST['details'];
 
- $_SESSION["isbn"] = $data[$t]['ISBN'];  
-  header("Location: ./bookInfo.php");
+//  $_SESSION["isbn"] = $data[$t]['ISBN'];  
+//   header("Location: ./bookInfo.php");
 
-}
+// }
 
-if(isset($_POST['detail1'])){
+// if(isset($_POST['detail1'])){
 
-  $_SESSION["isbn"] = $_POST['detail1'][0];
-  header("Location: ./bookInfo.php");
+//   $_SESSION["isbn"] = $_POST['detail1'];
+//   header("Location: ./bookInfo.php");
 
-}
+// }
 // $query1 = "SELECT language FROM language WHERE ISBN = '001'";
 // $res1 = mysqli_query($conn, $query1);
 // $ar1=[];
@@ -69,7 +68,7 @@ if(isset($_POST['detail1'])){
 
     <div class="sidebar">
       <div class="top">
-        <a href="./addBook.php" style="text-decoration: none;">
+        <a href="#" style="text-decoration: none;">
           <span class="logo">LMS</span>
         </a>
       </div>
@@ -77,8 +76,9 @@ if(isset($_POST['detail1'])){
       <div class="center">
         <ul>
           <p class="title">MAIN</p>
-          <a href="./dashboard.php">
+          <a href="./user-dashboard.php">
             <li>
+              <i class="fas fa-th-large"></i>
               <span>Dashboard</span>
             </li>
           </a>
@@ -89,19 +89,12 @@ if(isset($_POST['detail1'])){
               <span>Insert book</span>
             </li>
           </a> -->
-          <a href="./manageBook.php">
-            <li>
+          <a href="#">
+            <li class="active">
               <span>
                 <i class="fas fa-book"></i>
-                Manage book
+                Book Library
               </span>
-            </li>
-          </a>
-          <a href="./manageMember.php">
-            <li>
-              <span>
-                <i class="fas fa-users"></i>
-                Manage member</span>
             </li>
           </a>
           <!-- <a href="./createBill.php">
@@ -109,11 +102,19 @@ if(isset($_POST['detail1'])){
               <span>Create bill</span>
             </li>
           </a> -->
-          <a href="./manageBill.php">
+          <a href="./user-bill.php">
             <li>
               <span>
                 <i class="fas fa-clipboard-list"></i>
-                Manage bill
+                Bill information
+              </span>
+            </li>
+          </a>
+          <a href="./user-infor.php">
+            <li>
+              <span>
+                <i class="fas fa-clipboard-list"></i>
+                User information
               </span>
             </li>
           </a>
@@ -133,20 +134,20 @@ if(isset($_POST['detail1'])){
       <center>
         <h3 style="margin-bottom: 50px">Simple library management</h3>
       </center>
-      
-      
 
-      <ul class="nav nav-tabs">
+      <!-- <ul class="nav nav-tabs">
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="#">Management</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="./addBook.php">Insertion</a>
         </li>
-      </ul>
+      </ul> -->
 
-      <!--  -->
-      <form method="Post" class="search-bar">
+      <div class="mngBook-subcontainer">
+        <!-- Search bar -->       
+
+      <form method="get" class="search-bar mt-lg-5">
         <div class="input-group">
           <input class="form-control border-end-0 border rounded-pill" type="text" id="example-search-input"
             placeholder="search..." name="bookid">
@@ -158,22 +159,38 @@ if(isset($_POST['detail1'])){
         </div>
       </form>
 
-      <table class="table">
-        <thead class="thead-light">
-          <tr>
+        <!-- checkbox filter
+        <div class="row status-checkbox">
+          <p class="col-2">Status</p>
+          <div class="book-group-checkbox col">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+              <label class="form-check-label" for="flexCheckDefault">Borrowing </label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
+              <label class="form-check-label" for="flexCheckDefault">Avaiable </label>
+            </div>
+          </div>
+        </div> -->
+
+        <table class="table">
+          <thead class="thead-light">
+            <tr>
             <th scope="col">#</th>
-            <th scope="col">ISBN</th>
-            <th scope="col">Title</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
+              <th scope="col">ISBN</th>
+              <th scope="col">Title</th>
+              <th scope="col">Status</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
           <?php
-        if(isset($_POST['find']) && isset($_POST['bookid'])){
+        if(isset($_GET['find']) && isset($_GET['bookid'])){
             
-            $temp = $_POST['bookid'];
+            $temp = $_GET['bookid'];
   
-            $query = "call search_book('$temp')";
+            $query = "call search_book($temp)";
             try {
               $res = mysqli_query($conn, $query);
               if(!$res)
@@ -183,9 +200,7 @@ if(isset($_POST['detail1'])){
                 while( $row = mysqli_fetch_assoc($res)){
                   $data1[] = $row;
                 }
-                //print_r($data1);
-                mysqli_free_result($res);
-                mysqli_next_result($conn);
+                
                 for ($i = 0; $i < count($data1); $i++) {
                   // $t1 = $data[$i]["ISBN"];                
       
@@ -193,12 +208,13 @@ if(isset($_POST['detail1'])){
           <th scope="row">' . ($i + 1) . '</th>
           <td>'.$data1[$i]['ISBN'].'</td>
           <td>'. $data1[$i]['title'] . '</td>
+          <td>'. $data1[$i]['available'] . '</td>
+          <td><a href="./user-bookDetail.php?isbn='.$data1[$i]['ISBN'].'" class="btn btn-primary">View details</a></td>
           
-          <td><form method = "Post">
-          <button type="submit" class="btn btn-primary" name="detail1[]" value = "'.$data1[$i]['ISBN'].'">View details</button>   
-            </form></td>
         </tr>  ';  
-        
+        // <td><form method = "Post">
+        //   <button type="submit" class="btn btn-primary" name="detail1" value = "'.$data1[$i]['ISBN'].'">View details</button>   
+        //     </form></td>
                 } 
               
                 
@@ -218,16 +234,19 @@ if(isset($_POST['detail1'])){
     <th scope="row">' . ($i + 1) . '</th>
     <td>'.$data[$i]['ISBN'].'</td>
     <td>'. $data[$i]['title'] . '</td>
-    
-    <td><form method = "Post">
-    <button type="submit" class="btn btn-primary" name="details[]" value = "'.$i.'">View details</button>   
-      </form></td>
-  </tr>  ';  
+    <td>'. $data[$i]['available'] . '</td>
+    <td><a href="./user-bookDetail.php?isbn='.$data[$i]['ISBN'].'" class="btn btn-primary">View details</a></td>
+    </tr>';  
   
           }
         }
 
-          
+      //   <td><form method = "Post">
+      //   <button type="submit" class="btn btn-primary" name="details" value = "'.$i.'">View details</button>   
+      //      </form></td>
+      //   
+
+
            // <td>'. $data[$i]['edition'] . '</td>
     // <td>'. $data[$i]['PRICE'] . '</td>
     // <td>'. $data[$i]['available'] . '</td>
@@ -239,19 +258,14 @@ if(isset($_POST['detail1'])){
     // <td>'.$t3.'</td>
           ?>
         </tbody>
-      </table>
+        </table>
+
+      </div>
+
+      <!-- ============== -->
+
     </div>
   </div>
 
 
 </body>
-
-</html>
-
-<?php
-// if(isset($_POST['details'])){
-//  // $_SESSION["isbn"] = $data[$i]['ISBN'];  
-//   header("Location: ./bookInfo.php");
-//   echo "asdg";
-// }
-?>

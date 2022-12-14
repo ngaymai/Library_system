@@ -1,19 +1,24 @@
 <?php
-require 'C:\xampp\htdocs\firstPHP\config.php';
-$query = "select  BID from bill";
+require 'config.php';
+$query = "call list_bill()";
 $res = mysqli_query($conn, $query);
 $data = array();
 
 while ($row = mysqli_fetch_assoc($res)) {
   $data[] = $row;
 }
+mysqli_free_result($res);
+mysqli_next_result($conn);
 
-
-
-if(isset($_POST['details'])){
+if (isset($_POST['details'])) {
   $t = $_POST['details'][0];
 
- $_SESSION["bid"] = $data[$t]['BID'];  
+  $_SESSION["bid"] = $data[$t]['BID'];
+  header("Location: ./billInfo.php");
+
+}
+if (isset($_POST['detail1'])) {
+  $_SESSION["bid"] = $_POST['detail1'][0];
   header("Location: ./billInfo.php");
 
 }
@@ -28,7 +33,7 @@ if(isset($_POST['details'])){
 // var_dump($ar1);
 // echo implode(',',$ar1);   
 
-    
+
 ?>
 
 <!DOCTYPE html>
@@ -110,6 +115,14 @@ if(isset($_POST['details'])){
               </span>
             </li>
           </a>
+          <a href="./config.php?logout=true">
+            <li>
+              <span>
+                <i class="fas fa-sign-out-alt"></i>
+                Log out
+              </span>
+            </li>
+          </a>
         </ul>
       </div>
     </div>
@@ -124,15 +137,16 @@ if(isset($_POST['details'])){
           <a class="nav-link active" aria-current="page" href="#">Bill management</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="./createBill.php">Create new bill</a>
+          <a class="nav-link" href="./createBill.php?act=create">Create new bill</a>
         </li>
       </ul>
-      <form method = "POST" class="search-bar mt-lg-5">
-        <div method = "POST" class="input-group">
+      <form method="POST" class="search-bar mt-lg-5">
+        <div method="POST" class="input-group">
           <input class="form-control border-end-0 border rounded-pill" type="text" id="example-search-input"
             placeholder="search..." name="bid">
           <div class="input-group-append">
-            <button class="btn btn-outline-secondary bg-white border-start-0 border rounded-pill ms-n3" type="submit" name="sb">
+            <button class="btn btn-outline-secondary bg-white border-start-0 border rounded-pill ms-n3" type="submit"
+              name="sb">
               <i class="fa fa-search"></i>
             </button>
           </div>
@@ -151,73 +165,86 @@ if(isset($_POST['details'])){
             </tr>
           </thead>
           <tbody>
-          <?php
-if(isset($_POST['sb']) && isset($_POST['bid'])){
-            $b = $_POST['bid'];
-            $query = "select * from bill where bid = $b";
-                     
+            <?php
+          if (isset($_POST['sb']) && isset($_POST['bid'])) {
+            $temp = $_POST['bid'];
+
+            $query = "call search_bill($temp)";
+
             try {
               $res = mysqli_query($conn, $query);
-              if(!$res)
-              throw new Exception("");
-              else{
-                
-                $row = mysqli_fetch_assoc($res);
-              
-                $query = "select  BID from valid_bill where BID = $b";
-                 $res = mysqli_query($conn, $query);
-                 $row1 = mysqli_fetch_assoc($res);
-                             $valid;
-                             if ($row1)
-                               $valid = 'Valid';
-                             else
-                               $valid = 'In valid';              
-                   echo '  <tr>
-                 <th scope="row">'.$row['BID'].'</th>
-                 <td>'.$valid.'</td>
-                 
-                 
-                 <td><form method = "Post">
-                 <button type="submit" class="btn btn-primary" name="details[]" value = "">View details</button>   
-                 </form></td>
-                 </tr>  '; 
+              if (!$res)
+                throw new Exception("");
+              else {
+                $data1 = array();
+                while ($row = mysqli_fetch_assoc($res)) {
+                  $data1[] = $row;
+                }
+                mysqli_free_result($res);
+                mysqli_next_result($conn);
+                for ($i = 0; $i < count($data1); $i++) {
+
+                  $id = $data1[$i]['BID'];
+                  $query = "select check_valid_bill($id) as total";
+                  $res = mysqli_query($conn, $query);
+                  $row1 = mysqli_fetch_assoc($res);
+                  mysqli_free_result($res);
+                  mysqli_next_result($conn);
+                  $valid = '';
+                  if ($row1['total'])
+                    $valid = 'Valid';
+                  else
+                    $valid = 'In valid';
+                  echo '  <tr>
+                  <th scope="row">' . $data1[$i]['BID'] . '</th>
+                  <td>' . $valid . '</td>
+                  
+                  
+                  <td><form method = "Post">
+                  <button type="submit" class="btn btn-primary" name="detail1[]" value = "' . $data1[$i]['BID'] . '">View details</button>   
+                  </form></td>
+                  </tr>  ';
+                }
+
               }
-          } catch (Exception $e) {
-            $str = $e->getmessage();
-            echo
-            "<script>alert('.$str.')</script>"; 
-          } 
-         
+            } catch (Exception $e) {
+              $str = $e->getmessage();
+              echo
+                "<script>alert('.$str.')</script>";
+            }
 
 
-}
-else{
-  for ($i = 0; $i < count($data); $i++) {
-    $t = $data[$i]['BID'];
-   
-    $query = "select  BID from valid_bill where BID = $t";
- $res = mysqli_query($conn, $query);
- $row = mysqli_fetch_assoc($res);
-             $valid;
-             if ($row)
-               $valid = 'Valid';
-             else
-               $valid = 'In valid';              
-   echo '  <tr>
- <th scope="row">'.$data[$i]['BID'].'</th>
- <td>'.$valid.'</td>
+
+          } else {
+            for ($i = 0; $i < count($data); $i++) {
+              $t = $data[$i]['BID'];
+
+              $query = "select check_valid_bill($t) as total";
+              $res = mysqli_query($conn, $query);
+              $row = mysqli_fetch_assoc($res);
+                
+              mysqli_free_result($res);
+              mysqli_next_result($conn);
+              $valid = '';
+              if ($row['total'])
+                $valid = 'Valid';
+              else
+                $valid = 'In valid';
+              echo '  <tr>
+ <th scope="row">' . $data[$i]['BID'] . '</th>
+ <td>' . $valid . '</td>
  
  
  <td><form method = "Post">
- <button type="submit" class="btn btn-primary" name="details[]" value = "'.$i.'">View details</button>   
+ <button type="submit" class="btn btn-primary" name="details[]" value = "' . $i . '">View details</button>   
  </form></td>
- </tr>  ';  
- 
- }
+ </tr>  ';
 
-}
+            }
 
- // <td>'. $data[$i]['edition'] . '</td>
+          }
+
+          // <td>'. $data[$i]['edition'] . '</td>
 // <td>'. $data[$i]['PRICE'] . '</td>
 // <td>'. $data[$i]['available'] . '</td>
 // <td>'. $data[$i]['destroyed'] . '</td>
@@ -226,7 +253,7 @@ else{
 // <td>'.$t1.'</td>
 // <td>'.$t2.'</td>
 // <td>'.$t3.'</td>
-?>
+          ?>
           </tbody>
         </table>
       </div>

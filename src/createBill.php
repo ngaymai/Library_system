@@ -1,24 +1,29 @@
 <?php
 
-require '.\config.php';
+require 'config.php';
+//require 'privileges.php';
 
-if(isset($_POST["submit"])){  
-  if(!empty($_SESSION["id"])){
-    $id = $_SESSION["id"];    
-    $query = "select * from account where SSN = '$id'";
-    $res = mysqli_query($conn, $query);
-    $row = mysqli_fetch_assoc($res);
-    
-  }
+if(isset($_POST["submit"])){   
   $isbn = $_POST["isbn"];
   $ssn = $_POST["ssn"];
-  $staff = $row["SSN"];
-  echo $staff;
-  $query = "insert into bill(staff_ssn, member_ssn)
-  values('$staff','$ssn')";
-  $res = mysqli_query($conn, $query);  
-  $last_id = $conn->insert_id;    
+  $staff = $_COOKIE["id"];  
+  $query = "call insert_bill('$staff','$ssn')";
+  try {
+    $res = mysqli_query($conn, $query);    
+    if(!$res)
+    throw new Exception("");
+    
+} catch (Exception $e) {
+  $str = $e->getmessage();
+  echo
+  "<script>alert('.$str.')</script>"; 
+} 
+  $query = "select LAST_INSERT_ID()";
+  $res = mysqli_query($conn, $query);   
+  $last_id = mysqli_fetch_array($res);
+  
   $isbnlist = explode (",", $isbn); 
+  $count = 0;
   foreach($isbnlist as $a){
     // $query = "select isbn from book where isbn = '$a'";
     // $res = mysqli_query($conn, $query);
@@ -28,24 +33,40 @@ if(isset($_POST["submit"])){
     //   "<script>alert('Book not available')</script>"; 
     // }
     //else{
-      $query = "insert into book_rental(bid, isbn)
-  values('$last_id','$a')";   
+    
+      $query = "call insert_book_rental('$last_id[0]','$a')";   
    // }
     try {
       $res = mysqli_query($conn, $query);
       if(!$res)
       throw new Exception("");
       else{
+        $count++;
         echo
     "<script>alert('insert $a successfully')</script>"; 
       }
   } catch (Exception $e) {
     $str = $e->getmessage();
+    
     echo
     "<script>alert('.$str.')</script>"; 
   } 
     
-  //$res = mysqli_query($conn, $query) 
+  if(!$count){
+    $query = "call delete_bill($last_id[0])"; 
+    try {
+      $res = mysqli_query($conn, $query);
+      if(!$res)
+      throw new Exception("");
+      
+  } catch (Exception $e) {
+    $str = $e->getmessage();
+    
+    echo
+    "<script>alert('.$str.')</script>"; 
+  } 
+    
+  }
  
   }
   
@@ -129,6 +150,14 @@ if(isset($_POST["submit"])){
               <span>
                 <i class="fas fa-clipboard-list"></i>
                 Manage bill
+              </span>
+            </li>
+          </a>
+          <a href="./config.php?logout=true">
+            <li>
+              <span>
+                <i class="fas fa-sign-out-alt"></i>
+                Log out
               </span>
             </li>
           </a>

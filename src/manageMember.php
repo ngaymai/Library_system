@@ -1,6 +1,7 @@
 <?php
-require 'C:\xampp\htdocs\firstPHP\config.php';
-$query = "select ssn, full_name from account where ssn like 'M%'";
+require 'config.php';
+//require 'privileges.php';
+$query = "CALL list_member()";
 $res = mysqli_query($conn, $query);
 $data = array();
 
@@ -8,15 +9,17 @@ while ($row = mysqli_fetch_assoc($res)) {
 
   $data[] = $row;
 }
+mysqli_free_result($res);
+mysqli_next_result($conn);
 
+if(isset($_POST['details'])){  
 
-if(isset($_POST['details'])){
-  $t = $_POST['details'][0];
-
- $_SESSION["ssn"] = $data[$t]['ssn'];  
+ $_SESSION["ssn"] = $_POST['details'];  
   header("Location: ./memberInfo.php");
 
 }
+
+
 // $query1 = "SELECT language FROM language WHERE ISBN = '001'";
 // $res1 = mysqli_query($conn, $query1);
 // $ar1=[];
@@ -108,6 +111,14 @@ if(isset($_POST['details'])){
               </span>
             </li>
           </a>
+          <a href="./config.php?logout=true">
+            <li>
+              <span>
+                <i class="fas fa-sign-out-alt"></i>
+                Log out
+              </span>
+            </li>
+          </a>
         </ul>
       </div>
     </div>
@@ -116,17 +127,17 @@ if(isset($_POST['details'])){
         <h3 style="margin-bottom: 50px">Simple library management</h3>
       </center>
       <!-- search bar -->
-      <div class="search-bar">
+      <form method = "post" class="search-bar">
         <div class="input-group">
           <input class="form-control border-end-0 border rounded-pill" type="text" id="example-search-input"
-            placeholder="search...">
+            placeholder="search..." name= "memid">
           <span class="input-group-append">
-            <button class="btn btn-outline-secondary bg-white border-start-0 border rounded-pill ms-n3" type="button">
+            <button class="btn btn-outline-secondary bg-white border-start-0 border rounded-pill ms-n3" type="submit" name="find">
               <i class="fa fa-search"></i>
             </button>
           </span>
         </div>
-      </div>
+      </form>
 
       <table class="table">
         <thead class="thead-light">        
@@ -140,22 +151,65 @@ if(isset($_POST['details'])){
         </thead>
         <tbody>
         <?php
-
-for ($i = 0; $i < count($data); $i++) {
-  // $t1 = $data[$i]["ISBN"];
+        if(isset($_POST['find'])){
+       
+          $temp = $_POST['memid'];
   
+          $query = "call search_member('$temp')";
+          
+          try {
+            $res = mysqli_query($conn, $query);
+            if(!$res)
+            throw new Exception("");
+            else{
+              $data1 = array();
+              while( $row = mysqli_fetch_assoc($res)){
+                $data1[] = $row;
+              }
+              mysqli_free_result($res);
+              mysqli_next_result($conn);
+              for ($i = 0; $i < count($data1); $i++) {
+                // $t1 = $data[$i]["ISBN"];                
+    
+                echo '  <tr>
+        <th scope="row">' . ($i + 1) . '</th>
+        <td>'.$data1[$i]['SSN'].'</td>
+        <td>'. $data1[$i]['FULL_NAME'] . '</td>
+        
+        <td><form method = "Post">
+        <button type="submit" class="btn btn-primary" name="details" value = "'.$data1[$i]['SSN'].'">View details</button>   
+          </form></td>
+      </tr>  ';  
+      
+              } 
+            
+              
+            }
+        } catch (Exception $e) {
+          $str = $e->getmessage();
+          echo
+          "<script>alert('.$str.')</script>"; 
+        }
+        }
+        else{
+          for ($i = 0; $i < count($data); $i++) {
+            // $t1 = $data[$i]["ISBN"];
+            
+          
+            echo '  <tr>
+          <th scope="row">' . ($i + 1) . '</th>
+          <td>'.$data[$i]['SSN'].'</td>
+          <td>'. $data[$i]['FULL_NAME'] . '</td>
+          
+          <td><form method = "Post">
+          <button type="submit" class="btn btn-primary" name="details" value = "'.$data[$i]['SSN'].'">View details</button>   
+          </form></td>
+          </tr>  ';  
+          
+          }
+        }
 
-  echo '  <tr>
-<th scope="row">' . ($i + 1) . '</th>
-<td>'.$data[$i]['ssn'].'</td>
-<td>'. $data[$i]['full_name'] . '</td>
 
-<td><form method = "Post">
-<button type="submit" class="btn btn-primary" name="details[]" value = "'.$i.'">View details</button>   
-</form></td>
-</tr>  ';  
-
-}
 
 ?>
           

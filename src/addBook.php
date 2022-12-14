@@ -1,6 +1,7 @@
 <?php
-require 'C:\xampp\htdocs\firstPHP\config.php';
-if(isset($_POST["submit"])){
+require 'config.php';
+//require 'privileges.php';
+if (isset($_POST["submit"])) {
   $isbn = $_POST["isbn"];
   $title = $_POST["title"];
   $author = $_POST["author"];
@@ -11,44 +12,59 @@ if(isset($_POST["submit"])){
   $query = "select isbn from book where ISBN = $isbn";
   $res = mysqli_query($conn, $query);
   $row = mysqli_fetch_assoc($res);
-  $authorlist = explode (",", $author);
+  $authorlist = explode(",", $author);
   $languagelist = explode(",", $language);
-  $subArealist = explode(",",$subArea);  
-  if(mysqli_num_rows($res)>0){
+  $subArealist = explode(",", $subArea);
+  if (mysqli_num_rows($res) > 0) {
     echo
-    "<script>alert('The book $isbn has exist')</script>";
+      "<script>alert('The book $isbn has exist')</script>";
+  } else {
+    if (isset($_POST["hired"])) {
+      $query = "call insert_book('$isbn','$title','$edition','$price', '1')";
+      // $out = mysqli_query($conn, $query);      
+    } else {
+      $query = "call insert_book('$isbn','$title','$edition','$price', '0')";
+      //$out = mysqli_query($conn, $query);
+    }
+
+    try {
+      $res = mysqli_query($conn, $query);
+      if (!$res)
+        throw new Exception("");
+       // mysqli_free_result($res);
+       // mysqli_next_result($conn); 
+    } catch (Exception $e) {
+      $str = $e->getmessage();
+      echo
+        "<script>alert('.$str.')</script>";
+    }
+    foreach ($authorlist as $a) {
+      $query = "call insert_author('$isbn','$a')";
+      try {
+        $res = mysqli_query($conn, $query);
+        if (!$res)
+          throw new Exception("");
+  
+      } catch (Exception $e) {
+        $str = $e->getmessage();
+        echo
+          "<script>alert('.$str.')</script>";
+      }
+      
+    }
+
+    foreach ($languagelist as $a) {
+      $query = "call insert_lang('$isbn','$a')";
+      mysqli_query($conn, $query);
+    }
+
+    foreach ($subArealist as $a) {
+      $query = "call insert_subj('$isbn','$a')";
+      mysqli_query($conn, $query);
+    }
+    echo
+      "<script>alert('Insert book successfully')</script>";      
   }
-  else{
-    if(isset($_POST["hired"])){
-      $query = "insert into book(isbn, title, edition, price)
-      values('$isbn','$title','$edition','$price')";
-      $out = mysqli_query($conn, $query);      
-    }
-    else{
-      $query = "insert into book(isbn, title, edition, price, hired)
-      values('$isbn','$title','$edition','$price', '0')";
-      $out = mysqli_query($conn, $query);
-    }
-    foreach($authorlist as $a){
-      $query = "insert into author(isbn, author_name)
-      values('$isbn','$a')";
-      mysqli_query($conn,$query);
-    }
-    
-    foreach($languagelist as $a){
-      $query = "insert into language(isbn, language)
-      values('$isbn','$a')";
-      mysqli_query($conn,$query);
-    }
-    
-    foreach($subArealist as $a){
-      $query = "insert into subject_area(isbn, subject)
-      values('$isbn','$a')";
-      mysqli_query($conn,$query);
-    }
-    echo
-    "<script>alert('Insert book successfully')</script>";
-  }  
 
 }
 ?>
@@ -110,7 +126,7 @@ if(isset($_POST["submit"])){
             </li>
           </a> -->
           <a href="./manageBook.php">
-          <li class="active">
+            <li class="active">
               <span>
                 <i class="fas fa-book"></i>
                 Manage book
@@ -134,6 +150,14 @@ if(isset($_POST["submit"])){
               <span>
                 <i class="fas fa-clipboard-list"></i>
                 Manage bill
+              </span>
+            </li>
+          </a>
+          <a href="./config.php?logout=true">
+            <li>
+              <span>
+                <i class="fas fa-sign-out-alt"></i>
+                Log out
               </span>
             </li>
           </a>
@@ -181,13 +205,13 @@ if(isset($_POST["submit"])){
             <input type="text" class="form-control" id="inputEdition" name="edition">
           </div>
         </div>
-         <div class="form-group row">
+        <div class="form-group row">
           <label for="inputlanguage" class="col-sm-2 col-form-label">Enter language</label>
           <div class="col-sm-10">
             <input type="text" class="form-control" id="inputlanguage" name="language">
           </div>
         </div>
-        <div class="form-group row"> 
+        <div class="form-group row">
           <label for="inputPrice" class="col-sm-2 col-form-label">Enter price</label>
           <div class="col-sm-10">
             <input type="text" class="form-control" id="inputPrice" name="price">

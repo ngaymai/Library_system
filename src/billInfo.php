@@ -1,9 +1,10 @@
 <?php
-require 'C:\xampp\htdocs\firstPHP\config.php';
+require 'config.php';
+//require 'privileges.php';
 
-$ssn = $_SESSION["ssn"];
+//$ssn = $_SESSION["ssn"];
 $bid = $_SESSION["bid"];
-$query = "select * from bill where BID = $bid";
+$query = "call find_bill_from_bid($bid)";
 $res = mysqli_query($conn, $query);
 $row = mysqli_fetch_assoc($res);
 mysqli_free_result($res);
@@ -16,7 +17,7 @@ while ($row1 = mysqli_fetch_assoc($res)) {
 }
 mysqli_free_result($res);
 mysqli_next_result($conn);
-$query = "select count(*) as total from valid_bill where BID = $bid";
+$query = "select check_valid_bill($bid) as total";
 $res1 = mysqli_query($conn, $query);
 $tmp = mysqli_fetch_array($res1, 1);
 mysqli_free_result($res1);
@@ -27,28 +28,67 @@ if ($tmp['total'])
 else
   $state = 'Invalid';
 
-  if(isset($_POST['ext'])){
+if (isset($_POST['ext'])) {
   $t = $_POST['ext'][0];
   $f = $data1[$t]['ISBN'];
-  $query = "update book_rental 
-  set due_date = ADDDATE(DUE_DATE, 15 )
-  where isbn = $f";  
+
+  $query = "call extend_book($bid, '$f')";
   try {
     $res = mysqli_query($conn, $query);
-    if(!$res)
-    throw new Exception("");
-    else{
+    if (!$res)
+      throw new Exception("");
+    else {
       header("Refresh:0");
       echo
-  "<script>alert('Extend $f successfully')</script>"; 
+        "<script>alert('Extend $f successfully')</script>";
     }
-} catch (Exception $e) {
+  } catch (Exception $e) {
+    $str = $e->getmessage();
+    echo
+      "<script>alert('.$str.')</script>";
+  }
+
+}
+if (isset($_POST['more'])) {
+  $_SESSION['ssn'] = $_POST['more'];
+  header("Location: ./memberInfo.php");
+}
+
+if(isset($_POST['sub'])){
+  $id = $_COOKIE['id'];
+try{
+  if(isset($_POST['return']))
+  {
+    $isbn = $_POST['return'];
+    $query = "call RETURN_BOOK('$id','$isbn',$bid,'0','0')";
+    $res = mysqli_query($conn, $query);  
+   
+  }
+  if(isset($_POST['destroy'])){
+    $isbn = $_POST['destroy'];
+    $query = "call RETURN_BOOK('$id','$isbn',$bid,'0','1')";
+    $res = mysqli_query($conn, $query); 
+   
+  }
+  if(isset($_POST['lost'])){
+    $isbn = $_POST['lost'];
+    $query = "call RETURN_BOOK('$id','$isbn',$bid,'1','0')";
+    $res = mysqli_query($conn, $query);
+    
+  }
+  if (!$res)
+  throw new Exception("");
+  else{
+    header("Refresh:0");
+      echo
+        "<script>alert('Return $isbn successfully')</script>";
+  }
+}catch (Exception $e) {
   $str = $e->getmessage();
   echo
-  "<script>alert('.$str.')</script>"; 
-} 
-
-  }
+    "<script>alert('.$str.')</script>";
+}  
+}
 
 ?>
 <!DOCTYPE html>
@@ -144,6 +184,14 @@ else
               </span>
             </li>
           </a>
+          <a href="./config.php?logout=true">
+            <li>
+              <span>
+                <i class="fas fa-sign-out-alt"></i>
+                Log out
+              </span>
+            </li>
+          </a>
         </ul>
       </div>
     </div>
@@ -180,32 +228,46 @@ else
                 <li>
                   <span class="a-list-item">
                     <span class="a-text-bold">Bill ID : </span>
-                    <span><?php echo $row['BID'];?></span>
+                    <span>
+                      <?php echo $row['BID']; ?>
+                    </span>
                   </span>
                 </li>
                 <li>
                   <span class="a-list-item">
                     <span class="a-text-bold">Start date : </span>
-                    <span><?php echo $row['start_date'];?></span>
+                    <span>
+                      <?php echo $row['start_date']; ?>
+                    </span>
                   </span>
                 </li>
                 <li>
                   <span class="a-list-item">
                     <span class="a-text-bold">Member : </span>
-                    <span><?php echo $row['MEMBER_SSN'];?></span>
-                    <a class="btn btn-info btn-sm ml-5" href="memberInfo.php">more details</a>
+                    <span>
+                      <?php echo $row['MEMBER_SSN'];
+                    echo '<form method = "Post" >
+                    <button type="submit" class="btn btn-info btn-sm ml-5" name="more" value = "' . $row['MEMBER_SSN'] . '">more details</button>   
+                </form>'
+                      ?>
+                    </span>
+
                   </span>
                 </li>
                 <li>
                   <span class="a-list-item">
                     <span class="a-text-bold">Staff : </span>
-                    <span><?php echo $row['STAFF_SSN'];?></span>
+                    <span>
+                      <?php echo $row['STAFF_SSN']; ?>
+                    </span>
                   </span>
                 </li>
                 <li>
                   <span class="a-list-item">
                     <span class="a-text-bold">Status : </span>
-                    <span><?php echo $state;?></span>
+                    <span>
+                      <?php echo $state; ?>
+                    </span>
                   </span>
                 </li>
               </ul>
@@ -220,26 +282,26 @@ else
             <h3>Book List</h3>
             <div id="accordion">
               <?php
-                  if($data1){
-                    $tmp = "";
-                    for($i = 0;$i<count($data1);$i++){
-                      $is = $data1[$i]['ISBN'];
-                      $query = "select title from book where ISBN = $is";
-$res = mysqli_query($conn, $query);
-$row2 = mysqli_fetch_assoc($res);
-mysqli_free_result($res);
-mysqli_next_result($conn);
+              if ($data1) {
+                $tmp = "";
+                for ($i = 0; $i < count($data1); $i++) {
+                  $is = $data1[$i]['ISBN'];
+                  $query = "call find_book('$is')";
+                  $res = mysqli_query($conn, $query);
+                  $row2 = mysqli_fetch_assoc($res);
+                  mysqli_free_result($res);
+                  mysqli_next_result($conn);
                   $t = "";
-                  if($data1[$i]['RETURN_DATE']){
+                  if ($data1[$i]['RETURN_DATE']) {
                     $t = $data1[$i]['RETURN_DATE'];
                   } else
-                    $t = 'NULL';              
-                      $tmp .= '<div class="card">
+                    $t = 'NULL';
+                  $tmp .= '<div class="card">
                       <div class="card-header" id="headingOne">
                         <h5 class="mb-0">
                           <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true"
                             aria-controls="collapseOne">
-                            #'. ($i+1).' ' .$row2['title'].'      
+                            #' . ($i + 1) . ' ' . $row2['title'] . '      
                           </button>
                         </h5>
                       </div>
@@ -250,39 +312,66 @@ mysqli_next_result($conn);
                             <li>
                               <span class="a-list-item">
                                 <span class="a-text-bold">Book ID : </span>
-                                <span>'.$data1[$i]['ISBN'].'</span>
+                                <span>' . $data1[$i]['ISBN'] . '</span>
                               </span>
                             </li>                                                        
-                            <li>
-                              <span class="a-list-item">
-                                <span class="a-text-bold">Overdue date : </span>
-                                <span>'.$data1[$i]['DUE_DATE'].'
+                            <li class="row">
+                              <span class="a-list-item col-5 ">
+                                <span class="a-text-bold ">Due date : </span>
+                                <span class="col-3">' . $data1[$i]['DUE_DATE'] . '
                                 </span>
-                                <form method = "Post" >
-                                <button type="submit" class="btn btn-info btn-sm ml-5" name="ext[]" value = "'.$i.'">Extend due date</button>   
-                                </form>
+                                
                               </span>
+                              <form method = "Post">
+                                <button type="submit" class="btn btn-info btn-sm ml-5" name="ext[]" value = "' . $i . '">Extend </button>   
+                              </form>
                             </li>
                             <li>
                               <span class="a-list-item">
                                 <span class="a-text-bold">Return date : </span>
-                                <span>'.$t.'</span>     
+                                <span>' . $t . '</span>     
                                 
                               </span>
                             </li>
-                          </ol>   
+                          </ol> ';
+                    if($t == 'NULL'){
+                    $tmp .= '<form method = "Post" class="billOption-form">
+                      <div class="row">
+                        <div class="form-check col-2">
+                          <label class="form-check-label" for="check1">
+                            <input type="checkbox" class="form-check-input" id="check1" name="return" value="' . $data1[$i]['ISBN'] . '"
+                              checked>Return
+                          </label>
+                        </div>
+                        <div class="form-check col-2">
+                          <label class="form-check-label" for="check2">
+                            <input type="checkbox" class="form-check-input" id="check2" name="destroy"
+                              value="' . $data1[$i]['ISBN'] . '">Destroy
+                          </label>
+                        </div>
+                        <div class="form-check col-2">
+                          <label class="form-check-label">
+                            <input type="checkbox" class="form-check-input" name="lost"
+                            value="' . $data1[$i]['ISBN'] . '" >Lost
+                          </label>
+                        </div>
+                      </div>
+                      <button type="submit" class="btn btn-primary mt-3" name="sub">Submit</button>
+                    </form>';
+                    }   
+                    $tmp .='   
                         </div>
                       </div>
                     </div>';
-                  
-                    }
+
+                }
                 echo $tmp;
-                  }
+              }
               ?>
-             
-             
-            
-              
+
+
+
+
             </div>
           </div>
         </div>
